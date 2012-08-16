@@ -21,52 +21,78 @@ require 'spec_helper'
 describe 'l2mesh' do
 
   let :title do
-    "TITLE"
+    "NAME"
   end
-
+  
   let :params do
     {
-      :name => 'NAME'
+      :ip			=> '1.2.3.4',
     }
   end
 
-  describe 'when running on Debian GNU/Linux' do
+  facts = {
+    :concat_basedir	=> '/var/lib/puppet/concat',
+    :fqdn		=> 'bm0404.the.re',
+  }
+
+  let :pre_condition do
+    'include concat::setup'
+  end
+
+  context 'when running on Debian GNU/Linux' do
     let :facts do
-      {
-        'osfamily' => 'Debian'
-      }
+      facts.merge({
+        'osfamily' => 'Debian',
+      })
+    end
+
+    it { should include_class('l2mesh::params') }
+    it { should include_class('concat::setup') }
+    it { should contain_package('tinc').with_ensure('present') }
+    it do
+      should contain_service('tinc_NAME').with({
+                                            :enable	=> true,
+                                            :ensure	=> 'running',
+                                          })
+      should contain_service('tinc_NAME').with_status(/USR1/)
+      should contain_service('tinc_NAME').with_restart(/HUP/)
+    end
+    it { should contain_file('/etc/tinc/NAME').with_ensure('directory') }
+    it { should contain_file('/etc/tinc/NAME/rsa_key.pub').with_content(/PUBLIC KEY/) }
+    it { should contain_file('/etc/tinc/NAME/rsa_key.priv').with_content(/PRIVATE KEY/) }
+    it { should contain_file('/etc/tinc/NAME/hosts').with_ensure('directory') }
+    pending("how to test for exported resources https://groups.google.com/forum/#!topic/puppet-users/XgQXt5n017o[1-25]") { should contain_concat('/etc/tinc/NAME/hosts/bm0404there').with({
+                                                                          :notify	=> 'Service[tinc_NAME]',
+                                                                          :content	=> /1.2.3.4/,
+                                                                        }) }
+  end
+
+  context 'when running on RedHat' do
+    let :facts do
+      facts.merge({
+        'osfamily' => 'RedHat'
+      })
     end
 
     it {
-      should contain_package('tinc').with_ensure('present')
+       should contain_package('tinc').with_ensure('present')
     }
   end
-
-  describe 'when running on RedHat' do
-    let :facts do
-      {
-        'osfamily' => 'RedHat'
-      }
-    end
-
-    # it {
-    #   should contain_package('????').with_ensure('present')
-    # }
-  end
   
-  describe 'when running on unknown' do
+  context 'when running on unknown' do
     let :facts do
-      {
+      facts.merge({
         'osfamily' => 'Plan9'
-      }
+      })
     end
 
     it do 
       expect {
-        should contain_package('tinc')
+        should 
       }.to raise_error(Puppet::Error, /Unsupported osfamily/)
     end
 
   end
   
 end
+

@@ -19,7 +19,7 @@
 require 'mocha'
 require 'fileutils'
 
-describe "the tinc_keygen function" do
+describe "tinc_keygen function" do
 
   before :each do
     @scope = Puppet::Parser::Scope.new
@@ -29,67 +29,32 @@ describe "the tinc_keygen function" do
     Puppet::Parser::Functions.function("tinc_keygen").should == "function_tinc_keygen"
   end
 
-  it "should raise a ParseError if no argument is passed" do
-    lambda { @scope.function_tinc_keygen([]) }.should( raise_error(Puppet::ParseError))
-  end
-
-  it "should raise a ParseError if there is more than 2 arguments" do
-    lambda { @scope.function_tinc_keygen(["foo", "bar", "foo"]) }.should( raise_error(Puppet::ParseError))
-  end
-
-  it "should raise a ParseError if the second argument is not fully qualified" do
-    lambda { @scope.function_tinc_keygen(["foo","bar"]) }.should( raise_error(Puppet::ParseError))
-  end
-
   describe "when executing properly" do
     before do
-      File.stubs(:directory?).with('/tmp/a/b/rsa_key.priv').returns(false)
-      File.stubs(:directory?).with('/tmp/a/b/rsa_key.pub').returns(false)
-      File.stubs(:read).with('/tmp/a/b/rsa_key.priv').returns('privatekey')
-      File.stubs(:read).with('/tmp/a/b/rsa_key.pub').returns('publickey')
+      @private_path = '/tmp/rsa_key.priv'
+      @public_path = '/tmp/rsa_key.pub'
+      File.stubs(:rm_f).with([@private_path, @public_path]).returns(true)
     end
 
-    it "should fail if the public but not the private key exists" do
-      File.stubs(:exists?).with("/tmp/a/b/rsa_key.priv").returns(true)
-      File.stubs(:exists?).with("/tmp/a/b/rsa_key.pub").returns(false)
-      lambda { @scope.function_tinc_keygen(['foo',"/tmp/a/b"]) }.should( raise_error(Puppet::ParseError))
-    end
-
-    it "should fail if the private but not the public key exists" do
-      File.stubs(:exists?).with("/tmp/a/b/rsa_key.priv").returns(true)
-      File.stubs(:exists?).with("/tmp/a/b/rsa_key.pub").returns(false)
-      lambda { @scope.function_tinc_keygen(['foo',"/tmp/a/b"]) }.should( raise_error(Puppet::ParseError))
-    end
-
-
-    it "should return an array of size 2 with the right content if the keyfiles exists" do
-      File.stubs(:exists?).with("/tmp/a/b/rsa_key.priv").returns(true)
-      File.stubs(:exists?).with("/tmp/a/b/rsa_key.pub").returns(true)
-      File.stubs(:directory?).with('/tmp/a/b').returns(true)
-      Puppet::Util.expects(:execute).never
-      result = @scope.function_tinc_keygen(['foo','/tmp/a/b'])
+    it "should generate the private and public keys" do
+      private_key = 'private key'
+      public_key = 'public key'
+      File.stubs(:read).with(@private_path).returns(private_key)
+      File.stubs(:read).with(@public_path).returns(public_key)
+      Puppet::Util.expects(:execute).with(['/usr/sbin/tincd', '--config', '/tmp', '--generate-keys']).returns("XXXXX\nGenerating 2048 bits keys\nXXXXXXXX")
+      result = @scope.function_tinc_keygen()
       result.length.should == 2
-      result[0].should == 'privatekey'
-      result[1].should == 'publickey'
+      result[0].should == private_key
+      result[1].should == public_key
     end
 
-    it "should generate the key if the keyfiles do not exist" do
+    it "should fail if the output does not contain the expected pattern" do
       File.stubs(:exists?).with("/tmp/a/b/rsa_key.priv").returns(false)
       File.stubs(:exists?).with("/tmp/a/b/rsa_key.pub").returns(false)
       File.stubs(:directory?).with("/tmp/a/b").returns(true)
-      Puppet::Util.expects(:execute).with(['/usr/sbin/tincd','-c', '/tmp/a/b', '-n', 'foo', '-K']).returns("foo\nbar\nGenerating 2048 bits keys\n++++\n---")
-      result = @scope.function_tinc_keygen(['foo','/tmp/a/b'])
-      result.length.should == 2
-      result[0].should == 'privatekey'
-      result[1].should == 'publickey'
-    end
-
-    it "should fail if something goes wrong during generation" do
-      File.stubs(:exists?).with("/tmp/a/b/rsa_key.priv").returns(false)
-      File.stubs(:exists?).with("/tmp/a/b/rsa_key.pub").returns(false)
-      File.stubs(:directory?).with("/tmp/a/b").returns(true)
-      Puppet::Util.expects(:execute).with(['/usr/sbin/tincd','-c', '/tmp/a/b', '-n', 'foo', '-K']).returns("something is wrong")
-      lambda { @scope.function_tinc_keygen(['foo',"/tmp/a/b"]) }.should( raise_error(Puppet::ParseError))
+      unexpected_output = 'ZZZZZZZZZZZZZ'
+      Puppet::Util.expects(:execute).with(['/usr/sbin/tincd', '--config', '/tmp', '--generate-keys']).returns(unexpected_output)
+      lambda { @scope.function_tinc_keygen() }.should( raise_error(Puppet::ParseError, /ZZZZZZZZZZZZ/))
     end
   end
 end

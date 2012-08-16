@@ -19,12 +19,12 @@
 class l2mesh::params {
   case $::osfamily {
     'Debian': {
-      $tinc_package_name = 'tinc'
-      $tinc_service_name = 'tinc'
+      $tinc_package_name	= 'tinc'
+      $tinc_service_name	= 'tinc'
     }
     'RedHat': {
-      $tinc_package_name = 'tinc'
-      $tinc_service_name = 'tinc'
+      $tinc_package_name	= 'tinc'
+      $tinc_service_name	= 'tinc'
     }
     default: {
       fail("Unsupported osfamily: ${::osfamily} operatingsystem: ${::operatingsystem}, module ${module_name} only support osfamily RedHat and Debian")
