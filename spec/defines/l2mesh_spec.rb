@@ -27,6 +27,7 @@ describe 'l2mesh' do
   let :params do
     {
       :ip			=> '1.2.3.4',
+      :bindtointerface		=> 'ETHER',
     }
   end
 
@@ -65,6 +66,7 @@ describe 'l2mesh' do
                                                                           :notify	=> 'Service[tinc_NAME]',
                                                                           :content	=> /1.2.3.4/,
                                                                         }) }
+    it { should contain_concat__fragment('/etc/tinc/NAME/tinc.conf_head').with_content(/ETHER/) }
   end
 
   context 'when running on RedHat' do

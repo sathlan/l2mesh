@@ -71,11 +71,15 @@
 #
 # [*ip*] ip address of the node
 #
+# [*BindToInterface*] ethernet interface to which the tinc daemon is bound
+#        (see the tinc.conf manual page for more information)
+#
 # == Example
 #
 #  include l2mesh::params
 #  l2mesh { 'lemesh':
-#      ip	=> $::ipaddress_eth0,
+#      ip		=> $::ipaddress_eth0,
+#      BindToInterface	=> 'eth3',
 #  }
 # 
 # == Dependencies
@@ -90,8 +94,10 @@
 #
 # Copyright 2012 eNovance <licensing@enovance.com>
 #
+
 define l2mesh(
               $ip,
+              $bindtointerface,
 ) {
 
   include l2mesh::params
@@ -166,34 +172,80 @@ define l2mesh(
 
   $tag = "tinc_${name}"
 
-  @@concat { $host:
+  @@file { $host:
     owner	=> root,
     group	=> root,
-    mode	=> 644,
+    mode	=> 444,
     require	=> File[$hosts],
     notify	=> Service[$service],
-    tag		=> $tag,
-  }
-
-  @@concat::fragment { "${host}_head":
-    target	=> $host,
-    order	=> 01,
     content	=> "Address = $ip
 Port = 655
 Compression = 0
 
-${public_key}",
+${public_key}
+",
     tag		=> $tag,
   }
 
-  @@concat::fragment { "${host}_key":
-    target	=> $host,
-    order	=> 02,
-    content	=> "file(${public})",
-    tag		=> $tag,
+  File <<| tag == $tag |>>
+
+  $conf = "${root}/tinc.conf"
+
+  concat { $conf:
+    owner	=> root,
+    group	=> root,
+    mode	=> 444,
+    require	=> File[$hosts],
+    notify	=> Service[$service],
   }
 
-  Concat <<| tag == $tag |>>
+  concat::fragment { "${conf}_head":
+    target	=> $conf,
+    content	=> "
+Name = ${fqdn}
+AddressFamily = ipv4
+Device = /dev/net/tun
+Mode = switch
+BindToInterface = ${bindtointerface}
 
-  Concat::Fragment <<| tag == $tag |>>
+",
+  }
+
+  $tag_conf = "${tag}_connect"
+
+  @@l2mesh_connect { "${tag_conf}_${fqdn}":
+    target	=> $conf,
+    tag		=> "${tag_conf}_${fqdn}",
+    content	=> "ConnectTO = ${fqdn}\n",
+  }
+
+  L2mesh_connect <<| tag != "${tag_conf}_${fqdn}" |>>
 }
+
+#
+# The l2mesh_connect wrapper is defined to create a set of exported resources.
+# It allows a construct such as 
+#
+#   L2mesh_connect <<| tag != 'self' |>>
+#
+# Without the l2mesh_connect wrapper it would be
+#
+#   Concat__Fragment <<| tag != 'self' |>>
+#
+# which would match all concat::fragment exported by all puppet modules.
+# A better implementation would be:
+#
+#   Concat__Fragment <<| tag != 'self' && tag == 'l2mesh' |>>
+#
+# But such expressions are not supported as of puppet 2.7.
+#
+define l2mesh_connect(
+                      $target,
+                      $content,
+) {
+  concat::fragment { $name:
+    target	=> $target,
+    content	=> $content,
+  }
+}
+  
