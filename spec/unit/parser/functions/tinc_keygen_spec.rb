@@ -29,32 +29,35 @@ describe "tinc_keygen function" do
     Puppet::Parser::Functions.function("tinc_keygen").should == "function_tinc_keygen"
   end
 
+  it "should complain if there are no arguments" do
+    lambda { @scope.function_tinc_keygen() }.should( raise_error(Puppet::ParseError, /exactly one argument/))
+  end
+
   describe "when executing properly" do
     before do
       @private_path = '/tmp/rsa_key.priv'
       @public_path = '/tmp/rsa_key.pub'
-      File.stubs(:rm_f).with([@private_path, @public_path]).returns(true)
+      @private_key = 'private key'
+      @public_key = 'public key'
+      FileUtils.expects(:mkdir_p).with('/tmp')
+      File.stubs(:exists?).with(@private_path).returns(true)
+      File.stubs(:exists?).with(@public_path).returns(false)
     end
 
     it "should generate the private and public keys" do
-      private_key = 'private key'
-      public_key = 'public key'
-      File.stubs(:read).with(@private_path).returns(private_key)
-      File.stubs(:read).with(@public_path).returns(public_key)
+      File.stubs(:read).with(@private_path).returns(@private_key)
+      File.stubs(:read).with(@public_path).returns(@public_key)
       Puppet::Util.expects(:execute).with(['/usr/sbin/tincd', '--config', '/tmp', '--generate-keys']).returns("XXXXX\nGenerating 2048 bits keys\nXXXXXXXX")
-      result = @scope.function_tinc_keygen()
+      result = @scope.function_tinc_keygen('/tmp')
       result.length.should == 2
-      result[0].should == private_key
-      result[1].should == public_key
+      result[0].should == @private_key
+      result[1].should == @public_key
     end
 
     it "should fail if the output does not contain the expected pattern" do
-      File.stubs(:exists?).with("/tmp/a/b/rsa_key.priv").returns(false)
-      File.stubs(:exists?).with("/tmp/a/b/rsa_key.pub").returns(false)
-      File.stubs(:directory?).with("/tmp/a/b").returns(true)
       unexpected_output = 'ZZZZZZZZZZZZZ'
       Puppet::Util.expects(:execute).with(['/usr/sbin/tincd', '--config', '/tmp', '--generate-keys']).returns(unexpected_output)
-      lambda { @scope.function_tinc_keygen() }.should( raise_error(Puppet::ParseError, /ZZZZZZZZZZZZ/))
+      lambda { @scope.function_tinc_keygen('/tmp') }.should( raise_error(Puppet::ParseError, /ZZZZZZZZZZZZ/))
     end
   end
 end

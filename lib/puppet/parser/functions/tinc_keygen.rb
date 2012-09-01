@@ -18,10 +18,14 @@
 #
 Puppet::Parser::Functions::newfunction(:tinc_keygen, :type => :rvalue, :doc =>
   "Returns an array containing the tinc private and public (in this order) key.") do |args|
-  private_key_path = "/tmp/rsa_key.priv"
-  public_key_path = "/tmp/rsa_key.pub"
-  ::FileUtils.rm_f([private_key_path, public_key_path])
-  output = Puppet::Util.execute(['/usr/sbin/tincd', '--config', '/tmp', '--generate-keys'])
-  raise Puppet::ParseError, "/usr/sbin/tincd --config /tmp --generate-keys output does not match the 'Generating .* bits keys' regular expression. #{output}" unless output =~ /Generating .* bits keys/
-  [File.read(private_key_path),File.read(public_key_path)]
+  raise Puppet::ParseError, "There must be exactly one argument, the directory in which keys are created" if args.to_a.length != 1
+  dir = args.to_a[0]
+  ::FileUtils.mkdir_p(dir)
+  private_key_path = File.join(dir, "rsa_key.priv")
+  public_key_path = File.join(dir, "rsa_key.pub")
+  if ! File.exists?(private_key_path) || ! File.exists?(public_key_path)
+    output = Puppet::Util.execute(['/usr/sbin/tincd', '--config', dir, '--generate-keys'])
+    raise Puppet::ParseError, "/usr/sbin/tincd --config #{dir} --generate-keys output does not match the 'Generating .* bits keys' regular expression. #{output}" unless output =~ /Generating .* bits keys/
+  end
+  [ File.read(private_key_path), File.read(public_key_path) ]
 end

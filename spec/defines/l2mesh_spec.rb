@@ -28,6 +28,7 @@ describe 'l2mesh' do
     {
       :ip			=> '1.2.3.4',
       :bindtointerface		=> 'ETHER',
+      :port			=> '666',
     }
   end
 
@@ -47,26 +48,40 @@ describe 'l2mesh' do
       })
     end
 
+    let(:scope) { Puppet::Parser::Scope.new }
+    it "should split 'one;two' on ';' into [ 'one', 'two' ]" do
+      scope.function_split(['one;two', ';']).should == [ 'one', 'two' ]
+    end
+
+    # it "bla" do
+    #   Puppet::Rails::Resource.create!(Puppet::Rails::Resource.create!(
+    #                                                                   :exported => true,
+    #                                                                   :host_id => 2,
+    #                                                                   :restype => 'file',
+    #                                                                   :title => 'KKKK'
+    #                                                                   ))
+    # end
     it { should include_class('l2mesh::params') }
     it { should include_class('concat::setup') }
     it { should contain_package('tinc').with_ensure('present') }
+    name = 'NAME'
     it do
-      should contain_service('tinc_NAME').with({
-                                            :enable	=> true,
-                                            :ensure	=> 'running',
+      should contain_exec("start_#{name}").with({
+                                            :command	=> /#{name}/,
+                                            :onlyif	=> /USR1/,
+                                            :provider	=> 'shell',
                                           })
-      should contain_service('tinc_NAME').with_status(/USR1/)
-      should contain_service('tinc_NAME').with_restart(/HUP/)
     end
-    it { should contain_file('/etc/tinc/NAME').with_ensure('directory') }
-    it { should contain_file('/etc/tinc/NAME/rsa_key.pub').with_content(/PUBLIC KEY/) }
-    it { should contain_file('/etc/tinc/NAME/rsa_key.priv').with_content(/PRIVATE KEY/) }
-    it { should contain_file('/etc/tinc/NAME/hosts').with_ensure('directory') }
-    pending("how to test for exported resources https://groups.google.com/forum/#!topic/puppet-users/XgQXt5n017o[1-25]") { should contain_concat('/etc/tinc/NAME/hosts/bm0404there').with({
-                                                                          :notify	=> 'Service[tinc_NAME]',
+    it { should contain_file("/etc/tinc/#{name}").with_ensure('directory') }
+    it { should contain_file("/etc/tinc/#{name}/rsa_key.pub").with_content(/PUBLIC KEY/) }
+    it { should contain_file("/etc/tinc/#{name}/rsa_key.priv").with_content(/PRIVATE KEY/) }
+    it { should contain_file("/etc/tinc/#{name}/hosts").with_ensure('directory') }
+    pending("how to test for exported resources https://groups.google.com/forum/#!topic/puppet-users/XgQXt5n017o[1-25]") { should contain_concat("/etc/tinc/#{name}/hosts/bm0404there").with({
+                                                                          :notify	=> "Service[tinc_#{name}]",
                                                                           :content	=> /1.2.3.4/,
                                                                         }) }
-    it { should contain_concat__fragment('/etc/tinc/NAME/tinc.conf_head').with_content(/ETHER/) }
+    it { should contain_concat__fragment("/etc/tinc/#{name}/tinc.conf_head").with_content(/#{params[:bindtointerface]}/) }
+
   end
 
   context 'when running on RedHat' do
