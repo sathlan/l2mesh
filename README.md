@@ -2,6 +2,21 @@
 tinc based L2 mesh
 =====================
 
+ Create a L2 ( http://en.wikipedia.org/wiki/Link_layer ) mesh using
+ tinc ( http://www.tinc-vpn.org/ ). It will create a new interface on
+ each machine participating in the mesh, as a new ethernet
+ interface. For instance, if the mesh is named "lemesh":
+
+   $ ip link show dev lemesh
+   4: lemesh: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast
+      link/ether 72:75:6e:60:59:f0 brd ff:ff:ff:ff:ff:ff
+
+ Each tinc daemon is configured to connect with all the others, to
+ maximize the number of fallbacks in case one connection stops
+ working.
+
+ A detailed manual page can be found in manifests/init.pp
+
 License
 =======
 
