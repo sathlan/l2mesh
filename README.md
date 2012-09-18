@@ -1,27 +1,128 @@
 <!-- -*- mode: markdown -*- -->
-tinc based L2 mesh
-=====================
+Introduction
+============
 
- Create a L2 ( http://en.wikipedia.org/wiki/Link_layer ) mesh using
- tinc ( http://www.tinc-vpn.org/ ). It will create a new interface on
- each machine participating in the mesh, as a new ethernet
- interface. For instance, if the mesh is named "lemesh":
+[l2mesh](http://redmine.the.re/projects/l2mesh "l2mesh") is a
+[tinc](http://www.tinc-vpn.org/ "tinc") based virtual switch,
+implemented as a puppet module. 
 
-   $ ip link show dev lemesh
-   4: lemesh: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast
-      link/ether 72:75:6e:60:59:f0 brd ff:ff:ff:ff:ff:ff
+It creates a new ethernet interface on the machine and connects it to
+the switch.
 
- Each tinc daemon is configured to connect with all the others, to
- maximize the number of fallbacks in case one connection stops
- working.
+Here is how the situation looks like when dealing with physical
+machines and a hardware switch:
 
- A detailed manual page can be found in manifests/init.pp
+
+    +----------------+                        +---------------+
+    |                |                        |               |
+    |          +-----+                        +-----+         |
+    | MACHINE  | eth0+---------+    +---------+eth0 | MACHINE |
+    |    A     +-----+         |    |         +-----+   C     |
+    |                |         |    |         |               |
+    +----------------+     +---+----+---+     +---------------+
+                           |  SWITCH    |
+                           +-----+------+
+                                 |
+    +----------------+           |
+    |                |           |
+    |          +-----+           |
+    | MACHINE  | eth0+-----------+
+    |    B     +-----+
+    |                |
+    +----------------+
+  
+Each of the three machines ( *A, B, C* ) have a physical ethernet
+connector which shows as *eth0*. They are connected with a cable to a
+*SWITCH* which transmits the packet coming from *MACHINE A* to *MACHINE B*
+or *MACHINE C*. 
+
+With *l2mesh*, a new virtual interface ( named *L2M* below ) is
+created on each machine and they are all connected by a [TINC daemon](http://www.tinc-vpn.org/). 
+Packets go from *MACHINE A* to *MACHINE B* or *MACHINE C* as if they were
+connected to a physical switch.
+
+    +---------+-----+
+    |         |eth0 |
+    |         +-----+
+    | MACHINE |THERE|
+    |    A    +-----+
+    |           TINC+---
+    +--------------++   \-------
+                   |            \-------   +---------------+
+                   |                    X--+TINC           |
+                   |            /-------   +-----+         |
+     +-------------+-+   /------           |THERE| MACHINE |
+     |           TINC+---                  +-----+    C    |
+     |         +-----+                     |eth0 |         |
+     | MACHINE |THERE|                     +-----+---------+
+     |    B    +-----+
+     |         |eth0 |
+     +---------+-----+
+
+Here is how it looks on each machine:
+
+    $ ip link show eth0
+    2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast state UP qlen 1000
+       link/ether fa:16:3e:48:ae:6f brd ff:ff:ff:ff:ff:ff
+
+    $ ip link show dev L2M
+    2: L2M: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast
+       link/ether 72:75:6e:60:59:f0 brd ff:ff:ff:ff:ff:ff
+
+Usage
+=====
+
+*l2mesh* is a puppet module that should be installed in the puppet master as follows
+
+    git clone http://redmine.the.re/git/l2mesh.git /etc/puppet/modules/l2mesh
+
+Here is an example usage that can be included in */etc/puppet/manifests/site.pp*
+
+    node /MACHINE-A.example.com/, /MACHINE-B.example.com/ {
+      include l2mesh::params
+      
+      l2mesh { 'L2M':
+        ip                  => $::ipaddress_eth0,
+        bindtointerface     => 'eth0',
+        port                => 656,
+      }
+    }
+
+On both *MACHINE-A* and *MACHINE-B*, it will 
+
+* create the *L2M* ethernet interface 
+* run the *tincd* daemon to listen on interface *eth0*, port *656* and
+  bind it to the *$::ipaddress_eth0* IP address
+
+In addition, both machines will try to reach each other:
+
+* *tincd* on *MACHINE-A* will try to connect to *tincd* on *MACHINE-B*
+* *tincd* on *MACHINE-B* will try to connect to *tincd* on *MACHINE-A*
+
+Adding a new machine to the *L2M* virtual switch is done by adding the
+hostname of the machine to the node list. For instance,
+*MACHINE-C.example.com* can be added with:
+
+    node /MACHINE-A.example.com/, /MACHINE-B.example.com/, /MACHINE-C.example.com/  {
+    ...
+
+l2mesh is not
+=============
+
+* l2mesh is not an equivalent to *brctl* : it is a switch made of *tinc* daemons running on multiple machines
+
+* l2mesh does not know anything about IP addresses or L3 routing
+
+Implementation
+==============
+
+See the implementation notes at the beginning of the file [manifests/init.pp](http://redmine.the.re/projects/l2mesh/repository/revisions/master/entry/manifests/init.pp "manifests/init.pp")
 
 License
 =======
 
     Copyright (C) 2012 eNovance <licensing@enovance.com>
-	
+
 	Author: Loic Dachary <loic@dachary.org>
 
     This program is free software: you can redistribute it and/or modify
@@ -41,5 +142,5 @@ License
 Running tests
 =============
 
-GEM_HOME=$HOME/.gem-installed gem install --include-dependencies --no-rdoc --no-ri puppet  puppet-lint rspec-puppet rspec-expectations mocha puppetlabs_spec_helper rake
-export PATH=$HOME/.gem-installed/bin:$PATH ; GEM_HOME=$HOME/.gem-installed rake spec
+    GEM_HOME=$HOME/.gem-installed gem install --include-dependencies --no-rdoc --no-ri puppet  puppet-lint rspec-puppet rspec-expectations mocha puppetlabs_spec_helper rake
+    export PATH=$HOME/.gem-installed/bin:$PATH ; GEM_HOME=$HOME/.gem-installed rake spec
