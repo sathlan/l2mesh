@@ -110,8 +110,36 @@ l2mesh is not
 
 * l2mesh is not an equivalent to *brctl* : it is a switch made of *tinc* daemons running on multiple machines
 
-* l2mesh does not know anything about IP addresses or L3 routing
+* l2mesh does not know anything about IP addresses or L3 routing. Here is a puppet snippet that shows how to assign IP addresses to an interface created by l2mesh, using the hostname to figure it out. For instance, bm0001.the.re will have the IP 192.168.100.1, bm0002.the.re will have the IP 192.168.100.2 etc. This is done by creating a *tinc-up* script that is run by *tincd* each time the interface is up.
 
+          $private_ip = regsubst($::fqdn, '^bm0+(\d+).*', '192.168.100.\1')
+        
+          file { '/etc/tinc':
+            ensure      => 'directory',
+            owner       => root,
+            group       => root,
+            mode        => '0755',
+            before      => L2mesh['L2M'],
+          }
+        
+          file { '/etc/tinc/L2M':
+            ensure      => 'directory',
+            owner       => root,
+            group       => root,
+            mode        => '0755',
+            require     => File['/etc/tinc'],
+          }
+        
+          file { '/etc/tinc/L2M/tinc-up':
+            owner       => root,
+            group       => root,
+            mode        => '0544',
+            content     => "#!/bin/bash                                                                                                                                         
+        ifconfig L2M ${private_ip} netmask 255.255.255.0                                                                                                                      
+        ",
+            require     => File['/etc/tinc/L2M'],
+          }
+        
 Implementation
 ==============
 
