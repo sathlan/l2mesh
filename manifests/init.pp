@@ -93,15 +93,6 @@
 #      removing the files and exported resources from the puppet
 #      database manually.
 #
-# There may be a race condition when multiple mesh are added
-# simultaneously, as puppet will run the /etc/init.d/tinc script many
-# times. As a result the *tincd* daemon for *lemesh* will attempt to
-# launch more than once. If there is a window of opportunity for two
-# deamons to be run if they are launched at exactly the same time, it
-# create a race condition. This is a uncommon use case for tinc
-# therefore if such a race condition actually exists, it is possible
-# that it will be triggered.
-#
 # == Generating and distributing keys ==
 #
 # Each host participating in the mesh has a public / private keypair.
