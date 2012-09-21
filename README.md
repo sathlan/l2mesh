@@ -83,7 +83,6 @@ Here is an example usage that can be included in */etc/puppet/manifests/site.pp*
       
       l2mesh { 'L2M':
         ip                  => $::ipaddress_eth0,
-        bindtointerface     => 'eth0',
         port                => 656,
       }
     }
@@ -91,7 +90,7 @@ Here is an example usage that can be included in */etc/puppet/manifests/site.pp*
 On both *MACHINE-A* and *MACHINE-B*, it will 
 
 * create the *L2M* ethernet interface 
-* run the *tincd* daemon to listen on interface *eth0*, port *656* and
+* run the *tincd* daemon to listen on port *656* and
   bind it to the *$::ipaddress_eth0* IP address
 
 In addition, both machines will try to reach each other:

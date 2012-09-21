@@ -36,7 +36,7 @@
 # Given three bare metal machines hosted at http://hetzner.de/,
 # http://ovh.fr/ and http://online.net/, *l2mesh* can be used to
 # create a new ethernet interface *lemesh* on each of them that
-# behaves as they had a physical ethernet card connected to one
+# behaves as if they had a physical ethernet card connected to one
 # hardware switch in the same room. The machine at *hetzner* could be
 # the DHCP server providing the IP for the *lemesh* interface of the
 # OVH machine. In addition, if the connection between the *hetzner*
@@ -56,15 +56,11 @@
 # [*port*] port number used by each tincd
 #        (see the tinc.conf manual page for more information)
 #
-# [*bindtointerface*] ethernet interface to which the tinc daemon is bound
-#        (see the tinc.conf manual page for more information)
-#
 # == Example
 #
 #  include l2mesh::params
 #  l2mesh { 'lemesh':
 #      ip               => $::ipaddress_eth0,
-#      bindtointerface  => 'eth3',
 #      port		=> 655,
 #  }
 #
@@ -188,7 +184,6 @@
 
 define l2mesh(
   $ip,
-  $bindtointerface,
   $port,            
 ) {
 
@@ -320,7 +315,6 @@ Name = ${fqdn}
 AddressFamily = ipv4
 Device = /dev/net/tun
 Mode = switch
-BindToInterface = ${bindtointerface}
 
 ",
   }
