@@ -218,7 +218,7 @@ define l2mesh(
 
   concat::fragment { "${boots}_${name}":
     target	=> $boots,
-    content	=> $name,
+    content	=> "${name}\n",
   }
 
   $root = "/etc/tinc/${name}"
