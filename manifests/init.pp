@@ -223,11 +223,13 @@ define l2mesh(
 
   $root = "/etc/tinc/${name}"
 
-  file { $root:
-    ensure      => 'directory',
-    owner       => root,
-    group       => root,
-    mode        => '0755',
+  if ! defined(File[$root]) {
+    file { $root:
+      ensure      => 'directory',
+      owner       => root,
+      group       => root,
+      mode        => '0755',
+    }
   }
 
   $hosts = "${root}/hosts"
