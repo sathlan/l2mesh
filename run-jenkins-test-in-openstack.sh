@@ -17,8 +17,28 @@
 #
 set -e
 
+function unit_tests() {
+    apt-get install -y tinc
+    apt-get install -y ruby1.8 rubygems 
+    apt-get remove -y ruby1.9.1
+    GEM_HOME=$HOME/.gem-installed gem install --include-dependencies --no-rdoc --no-ri --version 1.1.3 diff-lcs
+    GEM_HOME=$HOME/.gem-installed gem install --include-dependencies --no-rdoc --no-ri --version 1.6.14 facter
+    GEM_HOME=$HOME/.gem-installed gem install --include-dependencies --no-rdoc --no-ri --version 0.0.1 metaclass
+    GEM_HOME=$HOME/.gem-installed gem install --include-dependencies --no-rdoc --no-ri --version 0.13.0 mocha
+    GEM_HOME=$HOME/.gem-installed gem install --include-dependencies --no-rdoc --no-ri --version 2.7.18 puppet
+    GEM_HOME=$HOME/.gem-installed gem install --include-dependencies --no-rdoc --no-ri --version 0.1.13 puppet-lint
+    GEM_HOME=$HOME/.gem-installed gem install --include-dependencies --no-rdoc --no-ri --version 0.2.0 puppetlabs_spec_helper
+    GEM_HOME=$HOME/.gem-installed gem install --include-dependencies --no-rdoc --no-ri --version 10.0.2 rake
+    GEM_HOME=$HOME/.gem-installed gem install --include-dependencies --no-rdoc --no-ri --version 2.12.0 rspec
+    GEM_HOME=$HOME/.gem-installed gem install --include-dependencies --no-rdoc --no-ri --version 2.12.0 rspec-core
+    GEM_HOME=$HOME/.gem-installed gem install --include-dependencies --no-rdoc --no-ri --version 2.12.0 rspec-expectations
+    GEM_HOME=$HOME/.gem-installed gem install --include-dependencies --no-rdoc --no-ri --version 2.12.0 rspec-mocks
+    GEM_HOME=$HOME/.gem-installed gem install --include-dependencies --no-rdoc --no-ri --version 0.1.4 rspec-puppet
+    export PATH=$HOME/.gem-installed/bin:$PATH ; GEM_HOME=$HOME/.gem-installed rake spec
+}
+
 function run() {
-    return 0
+    unit_tests || return 1
 }
 
 case "$1" in
