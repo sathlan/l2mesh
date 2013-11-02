@@ -112,19 +112,35 @@ describe 'l2mesh::ip' do
     "NAME"
   end
   
-  let :params do
-    {
-      :source			=> 'bm0044.the.re',
-      :re			=> '^bm0+(\d+).*',
-      :ip                       => '192.168.100.\1',
-      :netmask                  => '255.255.255.0'
-    }
-  end
+  context 'when matching fqdn into class C' do
+    let :params do
+      {
+        :source			=> 'bm0044.the.re',
+        :re			=> '^bm0+(\d+).*',
+        :ip                       => '192.168.100.\1',
+        :netmask                  => '255.255.255.0'
+      }
+    end
 
-  context 'when matching fqdn' do
     name = 'NAME'
     it { should contain_file("/etc/tinc").with_ensure('directory') }
     it { should contain_file("/etc/tinc/#{name}").with_ensure('directory') }
     it { should contain_file("/etc/tinc/#{name}/tinc-up").with_content(/192.168.100.44/) }
+  end  
+
+  context 'when matching fqdn into class B' do
+    let :params do
+      {
+        :source			=> 'bm0404.the.re',
+        :re			=> '^bm(\d\d)(\d\d)*',
+        :ip                       => '192.168.\1.\2',
+        :netmask                  => '255.255.0.0'
+      }
+    end
+
+    name = 'NAME'
+    it { should contain_file("/etc/tinc").with_ensure('directory') }
+    it { should contain_file("/etc/tinc/#{name}").with_ensure('directory') }
+    it { should contain_file("/etc/tinc/#{name}/tinc-up").with_content(/192.168.04.04/) }
   end  
 end
