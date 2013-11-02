@@ -25,7 +25,6 @@ function unit_tests() {
     GEM_HOME=$HOME/.gem-installed gem install --ignore-dependencies --no-rdoc --no-ri --version 1.6.14 facter
     GEM_HOME=$HOME/.gem-installed gem install --ignore-dependencies --no-rdoc --no-ri --version 0.0.1 metaclass
     GEM_HOME=$HOME/.gem-installed gem install --ignore-dependencies --no-rdoc --no-ri --version 0.13.0 mocha
-    GEM_HOME=$HOME/.gem-installed gem install --ignore-dependencies --no-rdoc --no-ri --version 2.7.18 puppet
     GEM_HOME=$HOME/.gem-installed gem install --ignore-dependencies --no-rdoc --no-ri --version 0.1.13 puppet-lint
     GEM_HOME=$HOME/.gem-installed gem install --ignore-dependencies --no-rdoc --no-ri --version 4.0.2 puppetmodule-stdlib
     GEM_HOME=$HOME/.gem-installed gem install --ignore-dependencies --no-rdoc --no-ri --version 2.12.0 rspec-core
@@ -35,6 +34,10 @@ function unit_tests() {
     GEM_HOME=$HOME/.gem-installed gem install --ignore-dependencies --no-rdoc --no-ri --version 10.0.2 rake
     GEM_HOME=$HOME/.gem-installed gem install --ignore-dependencies --no-rdoc --no-ri --version 0.1.4 rspec-puppet
     GEM_HOME=$HOME/.gem-installed gem install --ignore-dependencies --no-rdoc --no-ri --version 0.4.1 puppetlabs_spec_helper
+    GEM_HOME=$HOME/.gem-installed gem install --ignore-dependencies --no-rdoc --no-ri --version 1.2.1 hiera
+    GEM_HOME=$HOME/.gem-installed gem install --ignore-dependencies --no-rdoc --no-ri --version 1.8.1 json_pure
+    GEM_HOME=$HOME/.gem-installed gem install --ignore-dependencies --no-rdoc --no-ri --version 0.6.6 rgen
+    GEM_HOME=$HOME/.gem-installed gem install --ignore-dependencies --no-rdoc --no-ri --version 3.3.1 puppet
     export PATH=$HOME/.gem-installed/bin:$PATH ; GEM_HOME=$HOME/.gem-installed rake spec
 }
 
