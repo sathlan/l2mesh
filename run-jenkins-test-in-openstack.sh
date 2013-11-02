@@ -27,7 +27,7 @@ function unit_tests() {
     GEM_HOME=$HOME/.gem-installed gem install --ignore-dependencies --no-rdoc --no-ri --version 0.13.0 mocha
     GEM_HOME=$HOME/.gem-installed gem install --ignore-dependencies --no-rdoc --no-ri --version 2.7.18 puppet
     GEM_HOME=$HOME/.gem-installed gem install --ignore-dependencies --no-rdoc --no-ri --version 0.1.13 puppet-lint
-    GEM_HOME=$HOME/.gem-installed gem install --ignore-dependencies --no-rdoc --no-ri --version 4.0.2 stdlib
+    GEM_HOME=$HOME/.gem-installed gem install --ignore-dependencies --no-rdoc --no-ri --version 4.0.2 puppetmodule-stdlib
     GEM_HOME=$HOME/.gem-installed gem install --ignore-dependencies --no-rdoc --no-ri --version 2.12.0 rspec-core
     GEM_HOME=$HOME/.gem-installed gem install --ignore-dependencies --no-rdoc --no-ri --version 2.12.0 rspec-expectations
     GEM_HOME=$HOME/.gem-installed gem install --ignore-dependencies --no-rdoc --no-ri --version 2.12.0 rspec-mocks
