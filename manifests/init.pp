@@ -175,7 +175,8 @@
 # Copyright 2012 eNovance <licensing@enovance.com>
 #
 
-define l2mesh(
+class l2mesh(
+  $interface,
   $ip,
   $port,
 ) {
@@ -191,19 +192,19 @@ define l2mesh(
     }
   }
 
-  $start = "start_${name}"
-  $running = "tincd --net=${name} --kill=USR1"
+  $start = "start_${interface}"
+  $running = "tincd --net=${interface} --kill=USR1"
 
   exec { $start:
-    command	=> "tincd --net=${name} && ${running}",
+    command	=> "tincd --net=${interface} && ${running}",
     onlyif	=> "! ${running}",
     provider	=> 'shell',
   }
 
-  $reload = "reload_${name}"
+  $reload = "reload_${interface}"
 
   exec { $reload:
-    command	=> "tincd --net=${name} --kill=HUP",
+    command	=> "tincd --net=${interface} --kill=HUP",
     provider	=> 'shell',
     refreshonly	=> true,
   }
@@ -218,12 +219,12 @@ define l2mesh(
     }
   }
 
-  concat::fragment { "${boots}_${name}":
+  concat::fragment { "${boots}_${interface}":
     target	=> $boots,
-    content	=> "${name}\n",
+    content	=> "${interface}\n",
   }
 
-  $root = "/etc/tinc/${name}"
+  $root = "/etc/tinc/${interface}"
 
   if ! defined(File[$root]) {
     file { $root:
@@ -250,7 +251,7 @@ define l2mesh(
   $private = "${root}/rsa_key.priv"
   $public = "${root}/rsa_key.pub"
 
-  $keys = tinc_keygen("${::l2mesh::params::keys_directory}/${name}/${fqdn}")
+  $keys = tinc_keygen("${::l2mesh::params::keys_directory}/${interface}/${fqdn}")
 
   $private_key = $keys[0]
   $public_key = $keys[1]
@@ -273,7 +274,7 @@ define l2mesh(
     before      => Exec[$start],
   }
 
-  $tag = "tinc_${name}"
+  $tag = "tinc_${interface}"
 
   @@file { $host:
     owner       => root,
@@ -325,7 +326,8 @@ Mode = switch
   Concat::Fragment <<| tag != "${tag_conf}_${fqdn}" |>>
 }
 
-define l2mesh::ip (
+class l2mesh::ip (
+  $interface,
   $source,
   $re,
   $ip,
@@ -346,7 +348,7 @@ define l2mesh::ip (
     }
   }
 
-  $net = "${root}/${name}"
+  $net = "${root}/${interface}"
 
   if ! defined(File[$net]) {
     file { $net:
@@ -365,7 +367,7 @@ define l2mesh::ip (
       group       => root,
       mode        => '0544',
       content     => "#!/bin/bash                                                                                                                     
-ifconfig ${name} ${private_ip} netmask $netmask
+ifconfig ${interface} ${private_ip} netmask $netmask
 ",
       require     => File[$net],
     }
