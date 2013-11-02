@@ -1,4 +1,5 @@
-#
+# -*- mode: ruby -*-
+#    Copyright (C) 2013 Cloudwatt <libre.licensing@cloudwatt.com>
 #    Copyright (C) 2012 eNovance <licensing@enovance.com>
 #
 #    Author: Loic Dachary <loic@dachary.org>
@@ -131,7 +132,7 @@
 # [the puppetmaster crashes] the */var/lib/puppet* directory will be
 #   lost and all the keypairs with it. If the puppetmaster is reconstructed
 #   but the content of */var/lib/puppet* cannot be recovered, the keys
-#   for all hosts will be recreated. 
+#   for all hosts will be recreated.
 #
 # [impersonating a node] the keypairs are distributed from the puppetmaster
 #   to the nodes and a node that would succeed in fooling the puppetmaster
@@ -170,12 +171,13 @@
 #
 # == Copyright
 #
+# Copyright 2013 Cloudwatt <libre.licensing@cloudwatt.com>
 # Copyright 2012 eNovance <licensing@enovance.com>
 #
 
 define l2mesh(
   $ip,
-  $port,            
+  $port,
 ) {
 
   include l2mesh::params
@@ -191,7 +193,7 @@ define l2mesh(
 
   $start = "start_${name}"
   $running = "tincd --net=${name} --kill=USR1"
-  
+
   exec { $start:
     command	=> "tincd --net=${name} && ${running}",
     onlyif	=> "! ${running}",
@@ -321,4 +323,51 @@ Mode = switch
   }
 
   Concat::Fragment <<| tag != "${tag_conf}_${fqdn}" |>>
+}
+
+define l2mesh::ip (
+  $source,
+  $re,
+  $ip,
+  $netmask
+) {
+
+  $private_ip = regsubst($source, $re, $ip)
+
+  $root = "/etc/tinc"
+
+  if ! defined(File[$root]) {
+    file { $root:
+      ensure      => 'directory',
+      owner       => root,
+      group       => root,
+      mode        => '0755',
+      before      => L2mesh[$name],
+    }
+  }
+
+  $net = "${root}/${name}"
+
+  if ! defined(File[$net]) {
+    file { $net:
+      ensure      => 'directory',
+      owner       => root,
+      group       => root,
+      mode        => '0755',
+      require     => File[$root],
+    }
+  }
+
+  $up = "${net}/tinc-up"
+  if ! defined(File[$up]) {
+    file { $up:
+      owner       => root,
+      group       => root,
+      mode        => '0544',
+      content     => "#!/bin/bash                                                                                                                     
+ifconfig ${name} ${private_ip} netmask $netmask
+",
+      require     => File[$net],
+    }
+  }
 }
