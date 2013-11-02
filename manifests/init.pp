@@ -344,7 +344,7 @@ class l2mesh::ip (
       owner       => root,
       group       => root,
       mode        => '0755',
-      before      => L2mesh[$name],
+      before      => Class['l2mesh'],
     }
   }
 
