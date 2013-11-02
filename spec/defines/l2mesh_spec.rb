@@ -47,11 +47,6 @@ describe 'l2mesh' do
       })
     end
 
-    let(:scope) { Puppet::Parser::Scope.new }
-    it "should split 'one;two' on ';' into [ 'one', 'two' ]" do
-      scope.function_split(['one;two', ';']).should == [ 'one', 'two' ]
-    end
-
     # it "bla" do
     #   Puppet::Rails::Resource.create!(Puppet::Rails::Resource.create!(
     #                                                                   :exported => true,

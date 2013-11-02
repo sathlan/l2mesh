@@ -22,7 +22,7 @@ require 'fileutils'
 describe "tinc_keygen function" do
 
   before :each do
-    @scope = Puppet::Parser::Scope.new
+    @scope = PuppetlabsSpec::PuppetInternals.scope
   end
 
   it "should exist" do
@@ -30,7 +30,7 @@ describe "tinc_keygen function" do
   end
 
   it "should complain if there are no arguments" do
-    lambda { @scope.function_tinc_keygen() }.should( raise_error(Puppet::ParseError, /exactly one argument/))
+    lambda { @scope.function_tinc_keygen([]) }.should( raise_error(Puppet::ParseError, /exactly one argument/))
   end
 
   describe "when executing properly" do
@@ -48,7 +48,7 @@ describe "tinc_keygen function" do
       File.stubs(:read).with(@private_path).returns(@private_key)
       File.stubs(:read).with(@public_path).returns(@public_key)
       Puppet::Util.expects(:execute).with(['/usr/sbin/tincd', '--config', '/tmp', '--generate-keys']).returns("XXXXX\nGenerating 2048 bits keys\nXXXXXXXX")
-      result = @scope.function_tinc_keygen('/tmp')
+      result = @scope.function_tinc_keygen(['/tmp'])
       result.length.should == 2
       result[0].should == @private_key
       result[1].should == @public_key
@@ -57,7 +57,7 @@ describe "tinc_keygen function" do
     it "should fail if the output does not contain the expected pattern" do
       unexpected_output = 'ZZZZZZZZZZZZZ'
       Puppet::Util.expects(:execute).with(['/usr/sbin/tincd', '--config', '/tmp', '--generate-keys']).returns(unexpected_output)
-      lambda { @scope.function_tinc_keygen('/tmp') }.should( raise_error(Puppet::ParseError, /ZZZZZZZZZZZZ/))
+      lambda { @scope.function_tinc_keygen(['/tmp']) }.should( raise_error(Puppet::ParseError, /ZZZZZZZZZZZZ/))
     end
   end
 end
