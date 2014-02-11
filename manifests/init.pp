@@ -175,7 +175,7 @@
 # Copyright 2012 eNovance <licensing@enovance.com>
 #
 
-class l2mesh(
+define l2mesh(
   $interface,
   $ip,
   $port,
@@ -196,32 +196,32 @@ class l2mesh(
   $running = "tincd --net=${interface} --kill=USR1"
 
   exec { $start:
-    command	=> "tincd --net=${interface} && ${running}",
-    onlyif	=> "! ${running}",
-    provider	=> 'shell',
+    command     => "tincd --net=${interface} && ${running}",
+    onlyif      => "! ${running}",
+    provider    => 'shell',
   }
 
   $reload = "reload_${interface}"
 
   exec { $reload:
-    command	=> "tincd --net=${interface} --kill=HUP",
-    provider	=> 'shell',
-    refreshonly	=> true,
+    command     => "tincd --net=${interface} --kill=HUP",
+    provider    => 'shell',
+    refreshonly => true,
   }
 
   $boots = '/etc/tinc/nets.boot'
 
   if ! defined(Concat[$boots]) {
     concat { $boots:
-      owner	=> root,
-      group	=> 0,
-      mode	=> '0400';
+      owner     => root,
+      group     => 0,
+      mode      => '0400';
     }
   }
 
   concat::fragment { "${boots}_${interface}":
-    target	=> $boots,
-    content	=> "${interface}\n",
+    target      => $boots,
+    content     => "${interface}\n",
   }
 
   $root = "/etc/tinc/${interface}"
@@ -242,7 +242,7 @@ class l2mesh(
     owner       => root,
     group       => root,
     mode        => '0755',
-    require	=> File[$root],
+    require     => File[$root],
   }
 
   $fqdn = regsubst($::fqdn, '[._-]+', '', 'G')
@@ -261,7 +261,7 @@ class l2mesh(
     group       => root,
     mode        => '0400',
     content     => $private_key,
-    notify	=> Exec[$reload],
+    notify      => Exec[$reload],
     before      => Exec[$start],
   }
 
@@ -326,15 +326,19 @@ Mode = switch
   Concat::Fragment <<| tag != "${tag_conf}_${fqdn}" |>>
 }
 
-class l2mesh::ip (
+define l2mesh::ip (
   $interface,
-  $source,
-  $re,
   $ip,
-  $netmask
+  $netmask,
+  $source = '',
+  $re = '',
 ) {
+  if($source != '' and $re != '') {
+    $private_ip = regsubst($source, $re, $ip)
+  } else {
+    $private_ip = $ip
+  }
 
-  $private_ip = regsubst($source, $re, $ip)
 
   $root = "/etc/tinc"
 
@@ -344,7 +348,7 @@ class l2mesh::ip (
       owner       => root,
       group       => root,
       mode        => '0755',
-      before      => Class['l2mesh'],
+      before      => L2mesh[$interface],
     }
   }
 
@@ -366,7 +370,7 @@ class l2mesh::ip (
       owner       => root,
       group       => root,
       mode        => '0544',
-      content     => "#!/bin/bash                                                                                                                     
+      content     => "#!/bin/bash
 ifconfig ${interface} ${private_ip} netmask $netmask
 ",
       require     => File[$net],
