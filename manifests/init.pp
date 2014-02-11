@@ -196,32 +196,32 @@ class l2mesh(
   $running = "tincd --net=${interface} --kill=USR1"
 
   exec { $start:
-    command	=> "tincd --net=${interface} && ${running}",
-    onlyif	=> "! ${running}",
-    provider	=> 'shell',
+    command     => "tincd --net=${interface} && ${running}",
+    onlyif      => "! ${running}",
+    provider    => 'shell',
   }
 
   $reload = "reload_${interface}"
 
   exec { $reload:
-    command	=> "tincd --net=${interface} --kill=HUP",
-    provider	=> 'shell',
-    refreshonly	=> true,
+    command     => "tincd --net=${interface} --kill=HUP",
+    provider    => 'shell',
+    refreshonly => true,
   }
 
   $boots = '/etc/tinc/nets.boot'
 
   if ! defined(Concat[$boots]) {
     concat { $boots:
-      owner	=> root,
-      group	=> 0,
-      mode	=> '0400';
+      owner     => root,
+      group     => 0,
+      mode      => '0400';
     }
   }
 
   concat::fragment { "${boots}_${interface}":
-    target	=> $boots,
-    content	=> "${interface}\n",
+    target      => $boots,
+    content     => "${interface}\n",
   }
 
   $root = "/etc/tinc/${interface}"
@@ -242,7 +242,7 @@ class l2mesh(
     owner       => root,
     group       => root,
     mode        => '0755',
-    require	=> File[$root],
+    require     => File[$root],
   }
 
   $fqdn = regsubst($::fqdn, '[._-]+', '', 'G')
@@ -261,7 +261,7 @@ class l2mesh(
     group       => root,
     mode        => '0400',
     content     => $private_key,
-    notify	=> Exec[$reload],
+    notify      => Exec[$reload],
     before      => Exec[$start],
   }
 
@@ -366,7 +366,7 @@ class l2mesh::ip (
       owner       => root,
       group       => root,
       mode        => '0544',
-      content     => "#!/bin/bash                                                                                                                     
+      content     => "#!/bin/bash
 ifconfig ${interface} ${private_ip} netmask $netmask
 ",
       require     => File[$net],
