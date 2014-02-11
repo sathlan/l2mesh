@@ -328,13 +328,17 @@ Mode = switch
 
 class l2mesh::ip (
   $interface,
-  $source,
-  $re,
   $ip,
-  $netmask
+  $netmask,
+  $source = '',
+  $re = '',
 ) {
+  if($source != '' and $re != '') {
+    $private_ip = regsubst($source, $re, $ip)
+  } else {
+    $private_ip = $ip
+  }
 
-  $private_ip = regsubst($source, $re, $ip)
 
   $root = "/etc/tinc"
 
