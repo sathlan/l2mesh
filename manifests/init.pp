@@ -175,7 +175,7 @@
 # Copyright 2012 eNovance <licensing@enovance.com>
 #
 
-class l2mesh(
+define l2mesh(
   $interface,
   $ip,
   $port,
@@ -326,7 +326,7 @@ Mode = switch
   Concat::Fragment <<| tag != "${tag_conf}_${fqdn}" |>>
 }
 
-class l2mesh::ip (
+define l2mesh::ip (
   $interface,
   $source,
   $re,
@@ -344,7 +344,7 @@ class l2mesh::ip (
       owner       => root,
       group       => root,
       mode        => '0755',
-      before      => Class['l2mesh'],
+      before      => L2mesh[$interface],
     }
   }
 
