@@ -1,7 +1,7 @@
 name    'dachary-l2mesh'
 version '1.0.0'
 source  'http://redmine.the.re/git/l2mesh.git'
-author  'Loïc Dachary'
+author  'Loic Dachary'
 license 'GNU AFFERO GENERAL PUBLIC LICENSE'
 summary 'Create l2mesh.'
 description 'Using tinc this create a l2 mesh secured network.'
