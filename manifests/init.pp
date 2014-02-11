@@ -319,11 +319,11 @@ Mode = switch
 
   @@concat::fragment { "${tag_conf}_${fqdn}":
     target      => $conf,
-    tag         => "${tag_conf}_${fqdn}",
+    tag         => [ "${tag_conf}_${fqdn}", $tag ],
     content     => "ConnectTO = ${fqdn}\n",
   }
 
-  Concat::Fragment <<| tag != "${tag_conf}_${fqdn}" |>>
+  Concat::Fragment <<| tag != "${tag_conf}_${fqdn}" and tag ==  $tag |>>
 }
 
 define l2mesh::ip (
