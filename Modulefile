@@ -1,4 +1,4 @@
-name    'l2mesh'
+name    'dachary-l2mesh'
 version '1.0.0'
 source  'http://redmine.the.re/git/l2mesh.git'
 author  'Loïc Dachary'
